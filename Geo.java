@@ -5,18 +5,12 @@ import java.net.http.HttpResponse;
 
 public class Geo {
 
-    public static class Coordinates {
-        public double latitude;
-        public double longitude;
+    public double latitude;
+    public double longitude;
 
-        public Coordinates(double latitude, double longitude) {
-            this.latitude = latitude;
-            this.longitude = longitude;
-        }
-    }
+        public Geo() {}
 
-    public static Coordinates getCoordinates(String city, String state, String country) throws Exception {
-        String apiKey = Config.getApiKey();
+    public void getCoordinates(String city, String state, String country, String apiKey) throws Exception {
         String query = city;
         if (!state.isEmpty()) query += "," + state;         // opcional, mas recomendável
         if (!country.isEmpty()) query += "," + country;     // opcional, mas recomendável
@@ -47,6 +41,20 @@ public class Geo {
         double lat = Double.parseDouble(body.substring(latIndex + 6, body.indexOf(",", latIndex)).trim());
         double lon = Double.parseDouble(body.substring(lonIndex + 6, body.indexOf(",", lonIndex)).trim());
 
-        return new Coordinates(lat, lon);
+        this.latitude = lat;
+        this.longitude = lon;
     }
+
+    public void coordinatesByZIP(String ZIPCode){
+
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+    
 }
