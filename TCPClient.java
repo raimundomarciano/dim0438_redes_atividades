@@ -3,8 +3,11 @@ import java.net.Socket;
 import java.util.Scanner;
 
 import javax.net.ssl.SSLSocket;
-
+import javax.net.ssl.SSLSocketFactory;
 import java.net.InetAddress;
+
+import java.io.*;
+import java.net.URLEncoder;
 
 public class TCPClient {
     private Scanner sc;
@@ -23,7 +26,7 @@ public class TCPClient {
         this.URLHost = host;
     }
 
-    public void Connect(){
+    public void Connect() throws Exception {
         try{
         this.socket.startHandshake();
         sc = new Scanner(System.in);
@@ -62,8 +65,7 @@ public class TCPClient {
         }      
     }
     
-    private void findByName(String cityName, String stateCode, String countryCode){
-        System.out.println("Enviando requisição HTTP/GET via Socket para: " + ip.getHostAddress() + ":" + networkDoor);
+    private void findByName(String cityName, String stateCode, String countryCode) {
         Geo localization = new Geo();
         try{
         localization.getCoordinates(cityName, stateCode, countryCode, this.acessKey);
@@ -77,7 +79,7 @@ public class TCPClient {
         System.out.println("Enviando requisição HTTP/GET via Socket para: " + ip.getHostAddress() + ":" + networkDoor);
         Geo localization = new Geo();
         try {
-            localization.coordinatesByZIP(ZIPCode);
+            localization.coordinatesByZIP(ZIPCode, acessKey);
                     findByCoordinates(localization.getLatitude(), localization.getLongitude());
         } catch (Exception e) {
             System.out.println("Erro ao enviar requisição HTTP/GET via socket para " + ip.getHostAddress() + ":" + networkDoor);
@@ -85,8 +87,42 @@ public class TCPClient {
 
     }
 
-    private void findByCoordinates(double longitude, double latitude){
+    private void findByCoordinates(double longitude, double latitude) throws Exception {
         System.out.println("Enviando requisição HTTP/GET via Socket para: " + ip.getHostAddress() + ":" + networkDoor);
+        Geo geo = new Geo();
+        String path = String.format(
+            "/data/2.5/weather?lat=%.4f&lon=%.4f&appid=%s&units=metric&lang=pt_br",
+            longitude, latitude, acessKey
+        );
+
+        
+        PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            // Send GET request
+            out.print("GET " + path + " HTTP/1.1\r\n");
+            out.print("Host: " + URLHost + "\r\n");
+            out.print("User-Agent: JavaSocketClient/1.0\r\n");
+            out.print("Connection: close\r\n");
+            out.print("\r\n");
+            out.flush();
+
+            // Read response
+            String line;
+            boolean bodyStarted = false;
+            StringBuilder response = new StringBuilder();
+            while ((line = in.readLine()) != null) {
+                if (bodyStarted) {
+                    response.append(line).append("\n");
+                }
+                if (line.isEmpty()) {
+                    bodyStarted = true;
+                }
+            }
+
+            System.out.println("\nDados sobre o clima:");
+            System.out.println(response);
+        
 
     }
 
@@ -102,7 +138,7 @@ public class TCPClient {
 
     }
 
-    private void processChoice(int userChoice){
+    private void processChoice(int userChoice) throws Exception {
         System.out.println("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-");
         switch (userChoice) {
             case 1:
