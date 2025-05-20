@@ -31,7 +31,7 @@ public class Geo {
     }
 
     public void coordinatesByZIP(String zipCode, String apiKey) throws Exception {
-        String country = "br";
+        String country = "EN";
         String query = URLEncoder.encode(zipCode, "UTF-8") + "," + URLEncoder.encode(country, "UTF-8");
         String path = String.format("/geo/1.0/zip?zip=%s&appid=%s", query, apiKey);
         String body = sendHttpRequest("api.openweathermap.org", 80, path);

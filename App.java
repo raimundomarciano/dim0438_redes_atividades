@@ -13,30 +13,7 @@ public class App {
         String host = "api.openweathermap.org";
         String key = "9f9a22f23f40bf419777081eed4beb7d";
         int porta = 443;
-        SSLSocket socket = null;
-        InetAddress ip = null;
-        for(int i = 0; i <= 9; i++){
-            if(i==9){
-                System.out.println("Conexão não estabelecida");
-                System.out.println("Encerrando a tentativa de contato");
-            }
-            else{
-                try{
-                    socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(host, porta);
-                    ip = InetAddress.getByName(host);
-                    System.out.println("Tentando conexão à: " + ip.getHostAddress() + ":" + porta);
-                    socket.setEnabledProtocols(protocols);
-                    socket.setEnabledCipherSuites(cipherSuites);
-                    System.out.println("Conectado à: " + ip.getHostAddress() + ":" + porta);
-                    break;
-                }catch(IOException e){
-                    System.out.println("O endereço IP do site: " + host + " não foi encontrado");
-                    System.out.println("Tentando conexão novamente");
-                    return;
-                }
-            }
-        }
-        TCPClient client = new TCPClient(socket, key, ip, porta, host);
+        TCPClient client = new TCPClient(key, porta, host);
         client.Connect();
     }
 }

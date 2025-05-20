@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -18,19 +17,26 @@ public class TCPClient {
     private InetAddress ip;
     private int userChoice = 0;
 
-    public TCPClient(SSLSocket clientSocket, String key, InetAddress ip, int networkDoorIn, String host) {
-        this.socket = clientSocket;
+    public TCPClient(String key, int networkDoorIn, String host) {
         this.acessKey = key;
-        this.ip = ip;
         this.networkDoor = networkDoorIn;
         this.URLHost = host;
     }
 
+
     public void Connect() throws Exception {
         try{
-        this.socket.startHandshake();
         sc = new Scanner(System.in);
+        this.ip = InetAddress.getByName(this.URLHost);
         while(true){
+            socket = createSocket();
+            socket.startHandshake();
+            if(this.socket.isConnected()){
+                System.out.println("Estou conectado");
+            }
+            if(this.socket.isClosed()){
+                System.out.println("Estou fehcado");
+            }
             showMenu();
             System.out.println("");
             System.out.println("Escolha uma opção: (Digite o número da opção escolhida)");
@@ -41,6 +47,32 @@ public class TCPClient {
             System.out.println("Erro ao conectar com servidor web. Verificar a sua disponibilidade.");
             e.printStackTrace();
         }   
+    }
+
+    private SSLSocket createSocket(){
+        final String[] protocols = new String[]{"TLSv1.3"};
+        final String[] cipherSuites = new String[]{"TLS_AES_128_GCM_SHA256"};
+        SSLSocket socket = null;
+        for(int i = 0; i <= 9; i++){
+            if(i==9){
+                System.out.println("Conexão não estabelecida");
+                System.out.println("Encerrando a tentativa de contato");
+            }
+            else{
+                try{
+                    socket = (SSLSocket) SSLSocketFactory.getDefault().createSocket(this.URLHost, this.networkDoor);
+                    System.out.println("Tentando conexão à: " + ip.getHostAddress() + ":" + this.networkDoor);
+                    socket.setEnabledProtocols(protocols);
+                    socket.setEnabledCipherSuites(cipherSuites);
+                    System.out.println("Conectado à: " + ip.getHostAddress() + ":" + this.networkDoor);
+                    return socket;
+                }catch(IOException e){
+                    System.out.println("O endereço IP do site: " + this.URLHost + " não foi encontrado");
+                    System.out.println("Tentando conexão novamente");
+                }
+            }
+        }
+        return socket;
     }
 
     private void terminateConnection(){
@@ -67,21 +99,24 @@ public class TCPClient {
     
     private void findByName(String cityName, String stateCode, String countryCode) {
         Geo localization = new Geo();
+        System.out.println("Realizado consulta de coordenadas em: " + ip.getHostAddress() + ":" + networkDoor);
         try{
         localization.getCoordinates(cityName, stateCode, countryCode, this.acessKey);
         findByCoordinates(localization.getLatitude(), localization.getLongitude());
         }catch(Exception e){
+            e.printStackTrace();
             System.out.println("Erro ao enviar requisição HTTP/GET via socket para " + ip.getHostAddress() + ":" + networkDoor);
         }
     }
 
-    private void findByZIPCode(String ZIPCode){
+    private void findByZIPCode(String ZIPCode, String countryCode){
         System.out.println("Enviando requisição HTTP/GET via Socket para: " + ip.getHostAddress() + ":" + networkDoor);
         Geo localization = new Geo();
         try {
             localization.coordinatesByZIP(ZIPCode, acessKey);
-                    findByCoordinates(localization.getLatitude(), localization.getLongitude());
+            findByCoordinates(localization.getLatitude(), localization.getLongitude());
         } catch (Exception e) {
+            e.printStackTrace();
             System.out.println("Erro ao enviar requisição HTTP/GET via socket para " + ip.getHostAddress() + ":" + networkDoor);
         }
 
@@ -89,12 +124,10 @@ public class TCPClient {
 
     private void findByCoordinates(double longitude, double latitude) throws Exception {
         System.out.println("Enviando requisição HTTP/GET via Socket para: " + ip.getHostAddress() + ":" + networkDoor);
-        Geo geo = new Geo();
         String path = String.format(
             "/data/2.5/weather?lat=%.4f&lon=%.4f&appid=%s&units=metric&lang=pt_br",
             longitude, latitude, acessKey
         );
-
         
         PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -119,9 +152,10 @@ public class TCPClient {
                     bodyStarted = true;
                 }
             }
-
+            System.out.println("Recebendo arquivo de: " + ip.getHostAddress() + ":" + networkDoor);
             System.out.println("\nDados sobre o clima:");
             System.out.println(response);
+            System.out.println("Conexão encerrada por: " + ip.getHostAddress() + ":" + networkDoor);
         
 
     }
@@ -139,18 +173,19 @@ public class TCPClient {
     }
 
     private void processChoice(int userChoice) throws Exception {
+        String cityName, countryCode = "", stateCode = "", ZIPCode;
         System.out.println("-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-");
         switch (userChoice) {
             case 1:
                 sc.nextLine();
-                String ZIPCode;
                 System.out.println("Digite o código postal da cidade");
                 ZIPCode = sc.nextLine();
-                findByZIPCode(ZIPCode);
+                System.out.println("Agora digite o código relacionado ao país dela");
+                countryCode = sc.nextLine();
+                findByZIPCode(ZIPCode, countryCode);
                 break;
             case 2:
                 sc.nextLine();
-                String cityName, countryCode = "", stateCode = "";
                 System.out.println("Digite o nome da cidade (obrigatório)");
                 cityName = sc.nextLine();
                 System.out.println("Digite o código do estado (opcional)");
