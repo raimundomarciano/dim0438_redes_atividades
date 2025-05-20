@@ -14,4 +14,6 @@ java App
 
 Se trata de uma conexão para consumo de uma API pública via Socket para realizar a visualização de dados climáticos de determinada cidade, ou estado, a API realiza isso por verificação de longitude e latitude, e por isso utilizamos de uma API auxiliar do mesmo site para que com o nome da cidade, ou seu ZIP Code, possamos encontrar qual a sua latitude ou longiutde e assim verificar quais os dados climáticos da região.
 
-Para fazer as requisições ao serviço web foi realizado um SSLSocket pois esse serviço aceita somente esse tipo de contato via sockets, além dos benefícios de autenticacção, segurança e 
+Para fazer as requisições ao serviço web foi realizado um SSLSocket pois esse serviço aceita somente esse tipo de contato via sockets, além dos benefícios de autenticacção, segurança e confiabilidade.
+
+Após cada requisição feita à API, por configuração do servidor, não é permitido utilizar o mesmo socket para realizar requisições, então tivemos que alterar para criar um novo a cada nova requisição.
